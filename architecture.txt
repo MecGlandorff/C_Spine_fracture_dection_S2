@@ -1,0 +1,16 @@
+cspine-fracture-cls/
+├─ README.md
+├─ requirements.txt
+├─ configs/
+│  ├─ train.yaml
+│  └─ infer.yaml
+├─ src/cspine_cls/
+│  ├─ common.py        # seed + device + logging, checkpoint IO
+│  ├─ data.py          # CLSDataset + transforms
+│  ├─ model.py         # TimmModelWithAttention
+│  ├─ train.py         # train/valid loops and early stopping
+│  ├─ metrics.py       # auc/f1/recall/acc helpers
+│  └─ inference.py     # load model + score per patient
+└─ scripts/
+   ├─ train.py
+   └─ infer.py

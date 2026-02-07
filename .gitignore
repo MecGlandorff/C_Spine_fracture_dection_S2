@@ -1,0 +1,47 @@
+pycache/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+
+.venv/
+venv/
+env/
+
+#OS files
+
+.DS_Store
+Thumbs.db
+
+#IDEs / editors
+
+.vscode/
+.idea/
+
+#Data 
+
+data/
+datasets/
+*.npy
+*.npz
+
+#Model outputs / checkpoints
+
+outputs/
+runs/
+checkpoints/
+*.pth
+*.pt
+
+#Logs
+
+*.log
+
+#Jupyter notebooks
+
+*.ipynb
+
+#Temporary / backup files
+
+*.tmp
+*.bak

@@ -1,0 +1,52 @@
+# Train config stage 2
+
+run_name: run_effnetv2_seq_v1
+out_dir: outputs
+
+data_dir: d:/AI DATA/NEXUS/data/masks/cropped_packed
+
+csv_path: d:/AI DATA/NEXUS/data/masks/train_seg.csv
+
+backbone: tf_efficientnetv2_s_in21ft1k
+pretrained: true
+
+image_size: 224
+n_slice_per_c: 15
+
+# Input format: 5 intensity + 1 mask!
+intensity_chans: 5
+mask_feat_dim: 64
+
+hidden_size: 256
+num_layers: 2
+bidirectional: true
+
+drop_rate: 0.0
+drop_rate_last: 0.3
+
+batch_size: 5
+accumulation_steps: 8
+num_workers: 4     # 0 is way too slow, 2 and 4 seems still stable, however if training doesn't start --> set to zero to see if it resolves
+use_amp: true
+grad_clip: 1.0
+
+init_lr: 1.0e-4
+eta_min: 1.0e-6
+lr_factor: 0.5
+lr_patience: 3
+
+n_epochs: 5
+val_split: 0.2
+seed: 42
+early_stopping_patience: 5
+
+# Normalization for intensity channels 
+intensity_mean: 0.5
+intensity_std: 0.25
+
+# Threshold selection goal. Focus on recall given importance of reducing false negatives with detecting fracturs
+threshold_objective: recall
+precision_floor: 0.2 # Focus on recall, but precision must be above 0.2. To avoid just labeling everything 1.0 for recall:1.0
+
+print_per_c: true
+force_cpu: false

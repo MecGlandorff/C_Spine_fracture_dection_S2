@@ -1,0 +1,22 @@
+# Inference config (stage 2)
+
+data_dir: data/masks/
+checkpoint_path: outputs/run_effnetv2_seq_v1/best_model.pth
+
+image_size: 224
+n_slice_per_c: 15
+
+intensity_chans: 5
+mask_feat_dim: 64
+
+hidden_size: 256
+num_layers: 2
+bidirectional: true
+
+drop_rate: 0.0
+drop_rate_last: 0.3
+
+intensity_mean: 0.5
+intensity_std: 0.25
+
+force_cpu: false
