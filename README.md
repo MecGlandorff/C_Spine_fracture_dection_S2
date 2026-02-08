@@ -13,7 +13,7 @@ The code is written as a research prototype and is intended to be run locally.
 ### Goal
 
 Detect cervical spine fractures (C1–C7) from preprocessed 2D slice sequences derived from CT scans.
-Stage 1 converted the 2d slice sequences to numpy arrays for stage 2 
+Stage 1 converted the 2d slice sequences (via a 3D segmentation model) to numpy arrays for stage 2 
  
 This repository does not include raw data or preprocessing steps for DICOM conversion. 
 
@@ -23,7 +23,6 @@ This repository does not include raw data or preprocessing steps for DICOM conve
 
 The data format and labeling follow the RSNA 2022 Cervical Spine Fracture Detection challenge:
 [https://www.kaggle.com/competitions/rsna-2022-cervical-spine-fracture-detection](https://www.kaggle.com/competitions/rsna-2022-cervical-spine-fracture-detection)
-So a special thanks to Kaggle and the RSNA.\
 
 Each study corresponds to one CT scan and contains binary fracture labels for vertebrae C1–C7.
 
@@ -87,11 +86,11 @@ Note: Expansion is performed after patient-level train/validation splitting to a
 * F1-score: 0.3828
 * Selected threshold: 0.45
 
-High recall is prioritized to minimize false negatives, which is desirable for clinical screening or triage scenarios. Lower precision is expected given the class imbalance. 
+High recall is prioritized to minimize false negatives, which is desirable for clinical screening scenarios. Lower precision is expected given the class imbalance. 
 
-Just a simple example from a study: this reflects the same issues that are reported in English hospitals where 19% of centres identified missed cervical spine injuries after they passed the ct-scans clearance protocols (https://boneandjoint.org.uk/Article/10.1302/0301-620X.98B6.37435). 
+An example study: this reflects the same issues that are reported in English hospitals where 19% of centres identified missed cervical spine injuries after they passed the ct-scans clearance protocols (https://boneandjoint.org.uk/Article/10.1302/0301-620X.98B6.37435). 
 
-Detected spinal fractures seems to be quite a complex task, given the complexitity of the bone structures.
+Detecting spinal fractures seems to be quite a complex task, given the complexitity of the bone structures.
 
 ### Approach
 
@@ -239,23 +238,24 @@ Stage 2 expects pre-packed .npy files per vertebra:
   * 0–4: intensity slices
   * 5: the predicted vertebra mask
 
-Given equivalent packed inputs and the provided configuration files, you can train the model locally yourself. Note: peak VRAM usage is about 6.5GB with default configuration. 
+Given equivalent packed inputs and the provided configuration files, you can reproduce the model easily yourself. Note: peak VRAM usage is about 6.5GB with default configuration. 
 
 
 ## Notes & Limitations
 
 * This is a research prototype meant to run locally, not a full system ready for production.
 * No DICOM handling or preprocessing is included in this project yet. 
-
+* PyTorch install: Install the appropriate CUDA/CPU build for your system.
 ---
 
 ## Dependencies
 
 See `requirements.txt`.
 
+
 Tested with:
 
-* Python 3.9+
+* Python 3.10.6
 * PyTorch
 * timm
 * albumentations
