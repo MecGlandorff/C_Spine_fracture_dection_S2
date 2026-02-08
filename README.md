@@ -2,9 +2,9 @@
 # Cervical Spine Fracture Classification (Stage 2)
 
 This repository contains the **stage 2 prototype** for cervical spine (C1–C7) fracture classification.
-The focus is on **vertebra-level classification** with **patient-level aggregation**.
+The focus is on **vertebra-level classification** with patient-level aggregation.
 
-The code is written as a **research prototype and is intended to be run locally**.
+The code is written as a research prototype and is intended to be run locally.
 
 ---
 
@@ -13,6 +13,7 @@ The code is written as a **research prototype and is intended to be run locally*
 ### Goal
 
 Detect cervical spine fractures (C1–C7) from preprocessed 2D slice sequences derived from CT scans.
+Stage 1 converted the 2d slice sequences to numpy arrays for stage 2 
 
 The data format and labeling follow the RSNA 2022 Cervical Spine Fracture Detection challenge:
 [https://www.kaggle.com/competitions/rsna-2022-cervical-spine-fracture-detection](https://www.kaggle.com/competitions/rsna-2022-cervical-spine-fracture-detection)
@@ -23,23 +24,21 @@ This repository does not include raw data or preprocessing steps for DICOM conve
 
 ### Approach
 
-* 2D CNN feature extraction per slice (EfficientNetV2 via `timm`)
+* 2D CNN feature extraction per slice (EfficientNetV2)
 * Small CNN encoder for vertebra mask (region-of-interest signal)
 * Temporal modeling with a bidirectional LSTM
 * Attention-based temporal pooling
 * Binary classification per vertebra (fracture / no fracture)
-* Patient-level prediction via max aggregation over vertebra probabilities
-
 ---
 
 ### Design Choice
 
-This model intentionally avoids a full 3D CNN. To keep it lightweight and efficient.
+This model intentionally avoids a full 3D CNN or vision transformer. This is to keep it lightweight and efficient.
 
 Slice-wise feature extraction combined with temporal modeling:
 
-* reduces memory requirements
-* simplifies training and debugging
+* reduces memory requirements of local computer
+* simplifies the training and debugging
 * keeps the architecture lightweight and interpretable
 
 ---
@@ -85,7 +84,7 @@ Where:
 * 0..4 : intensity slices (normalized)
 * 5    : vertebra mask (binary, 0/1)
 
-`T` (number of slices per vertebra) is configured via `n_slice_per_c` in the config.
+`T` (number of slices per vertebra) is configured via `n_slice_per_c` in the config. 
 
 ---
 
@@ -93,14 +92,14 @@ Where:
 
 Training is launched via the script entrypoint:
 
-python scripts/train.py --config configs/train.yaml
+So to run, type in terminal: "python scripts/train.py --config configs/train.yaml"
 
 ### Key Characteristics of project
 
 * Patient-level train/validation split
   (no overlap of StudyInstanceUID between sets)
 * Focal loss with an automatically derived alpha
-* Vertebra-specific sample weighting to compensate for more commonly fractured vertebrae
+* Different weighting per vertabreato compensate for more commonly or less commonly fractured vertebrae
 * Threshold selection on validation data
 * Configuration snapshot is saved per run
 
@@ -128,7 +127,7 @@ python scripts/infer.py --config configs/infer.yaml --uid <StudyInstanceUID>
 * Patient-level probability (max over vertebrae)
 * Patient-level binary prediction
 
-The decision threshold is loaded from the checkpoint unless explicitly overridden in the config.
+Note: The decision threshold is loaded from the checkpoint unless explicitly overridden in the config.
 
 ---
 
@@ -139,14 +138,14 @@ The decision threshold is loaded from the checkpoint unless explicitly overridde
 * Recall is treated as the primary optimization objective, given that reducing concluding that there isnt a fracture
 * while there is, is medically important. 
 
-Metrics are intended for **model comparison and development**
+Note: Metrics are intended for model comparison and development
 
 ---
 
 ## Notes & Limitations
 
-* This is a **research prototype meant to run locally**, not a production-ready system
-* No DICOM handling or preprocessing is included in this project
+* This is a research prototype meant to run locally, not a full system ready for production.
+* No DICOM handling or preprocessing is included in this project yet. 
 
 ---
 
