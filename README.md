@@ -14,13 +14,80 @@ The code is written as a research prototype and is intended to be run locally.
 
 Detect cervical spine fractures (C1–C7) from preprocessed 2D slice sequences derived from CT scans.
 Stage 1 converted the 2d slice sequences to numpy arrays for stage 2 
-
-The data format and labeling follow the RSNA 2022 Cervical Spine Fracture Detection challenge:
-[https://www.kaggle.com/competitions/rsna-2022-cervical-spine-fracture-detection](https://www.kaggle.com/competitions/rsna-2022-cervical-spine-fracture-detection)
-
+ 
 This repository does not include raw data or preprocessing steps for DICOM conversion. 
 
 ---
+
+### Data and Results
+
+The data format and labeling follow the RSNA 2022 Cervical Spine Fracture Detection challenge:
+[https://www.kaggle.com/competitions/rsna-2022-cervical-spine-fracture-detection](https://www.kaggle.com/competitions/rsna-2022-cervical-spine-fracture-detection)
+So a special thanks to Kaggle and the RSNA.\
+
+Each study corresponds to one CT scan and contains binary fracture labels for vertebrae C1–C7.
+
+For this stage-2 prototype, patient-level annotations are expanded to vertebra-level samples:
+
+One StudyInstanceUID → up to 7 vertebra samples (C1–C7)
+
+Each vertebra is treated as a separate binary classification task for the model
+
+A patient is considered positive if any vertebra is fractured (note: multiple vertebra can also be fractured at the same time)
+
+**Class distribution**
+
+The dataset is imbalanced, especially at the vertebra level.
+
+Mean positive rate per label (= prevalence of fracture):
+
+Patient overall: 47.6%
+
+C1: 7.2%
+
+C2: 14.1%
+
+C3: 3.6%
+
+C4: 5.3%
+
+C5: 8.0%
+
+C6: 13.7%
+
+C7: 19.5%
+
+This imbalance requires thinking about:
+
+* recall-focused optimization
+* per-vertebra weighting
+* careful threshold selection
+
+Below is an example of the first 3 patients in the data. Where only patient 2 has no fractures, patient 1 has c1 and c2 fractured 
+and patient 3 has only c5 fractured.
+
+```text
+| StudyInstanceUID | patient_overall | C1 | C2 | C3 | C4 | C5 | C6 | C7 |
+| ---------------- | --------------- | -- | -- | -- | -- | -- | -- | -- |
+| 1.2.826.0.1.…    | 1               | 1  | 1  | 0  | 0  | 0  | 0  | 0  |
+| 1.2.826.0.1.…    | 0               | 0  | 0  | 0  | 0  | 0  | 0  | 0  |
+| 1.2.826.0.1.…    | 1               | 0  | 0  | 0  | 0  | 1  | 0  | 0  |
+```
+Note: Expansion is performed after patient-level train/validation splitting to avoid data leakage.
+
+**The following results correspond to a stage-2 prototype trained with:**
+
+* patient-level train/validation split
+* recall-focused objective
+* threshold selected on validation data
+
+**Validation performance (overall)**
+* Recall: 0.8885 (missed 11.5% of actual fractures)
+* Precision: 0.2440 (only 24.4% labeled fractured is an actual fracture)
+* F1-score: 0.3828
+* Selected threshold: 0.45
+
+High recall is prioritized to minimize false negatives, which is desirable for clinical screening or triage scenarios. Lower precision is expected given the class imbalance. This reflects the same issues that are reported in English hospitals where 19% of centres identified missed cervical spine injuries after they passed the ct-scans clearance protocols (https://boneandjoint.org.uk/Article/10.1302/0301-620X.98B6.37435). Detected spinal fractures seems to be quite a complex task, given the complexitity of the bone structures.
 
 ### Approach
 
