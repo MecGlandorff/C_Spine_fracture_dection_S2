@@ -45,23 +45,24 @@ Slice-wise feature extraction combined with temporal modeling:
 
 ## Repository Structure
 
+```text
 cspine-fracture-cls/
-├─ README.md
-├─ requirements.txt
-├─ configs/
-│  ├─ train.yaml        # training configuration
-│  └─ infer.yaml        # inference configuration
-├─ src/cspine_cls/
-│  ├─ common.py         # seeds, device selection, logging, checkpoint IO
-│  ├─ data.py           # dataset + transforms
-│  ├─ model.py          # CNN + bidirectional LSTM + attention
-│  ├─ train.py          # training & validation loops
-│  ├─ metrics.py        # recall / F1 helpers + threshold sweep
-│  └─ inference.py     # patient-level inference
-└─ scripts/
-├─ train.py          # training entrypoint
-└─ infer.py          # inference entrypoint
-
+├── README.md
+├── requirements.txt
+├── configs/
+│   ├── train.yaml        # training configuration
+│   └── infer.yaml        # inference configuration
+├── src/cspine_cls/
+│   ├── common.py         # seeds, device selection, logging, checkpoint IO
+│   ├── data.py           # dataset + transforms
+│   ├── model.py          # CNN + bidirectional LSTM + attention
+│   ├── train.py          # training & validation loops
+│   ├── metrics.py        # recall / F1 helpers + threshold sweep
+│   └── inference.py      # patient-level inference
+└── scripts/
+    ├── train.py          # training entrypoint
+    └── infer.py          # inference entrypoint
+```
 ---
 
 ## Data Assumptions:
