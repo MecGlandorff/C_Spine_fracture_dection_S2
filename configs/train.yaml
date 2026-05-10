@@ -3,9 +3,9 @@
 run_name: run_effnetv2_seq_v1
 out_dir: outputs
 
-data_dir: d:/AI DATA/NEXUS/data/masks/cropped_packed
+data_dir: data/packed
 
-csv_path: d:/AI DATA/NEXUS/data/masks/train_seg.csv
+csv_path: data/train.csv
 
 backbone: tf_efficientnetv2_s_in21ft1k
 pretrained: true

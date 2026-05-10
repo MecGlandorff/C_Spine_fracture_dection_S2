@@ -32,7 +32,6 @@ from sklearn.utils.class_weight import compute_class_weight
 
 from .common import set_seed, get_device, ensure_dir, save_checkpoint, log_line
 from .data import make_loaders
-from .model import build_model
 from .metrics import threshold_sweep, compute_binary_metrics, safe_auc
 
 
@@ -136,6 +135,7 @@ def train_one_epoch(model, loader, optimizer, scaler, loss_fn, device, cfg: Dict
 
     optimizer.zero_grad(set_to_none=True)
     bar = tqdm(loader, desc="Training", leave=True)
+    step = -1
 
     for step, (x, y, cid, w, uid) in enumerate(bar):
         x = x.to(device, non_blocking=True)
@@ -169,6 +169,9 @@ def train_one_epoch(model, loader, optimizer, scaler, loss_fn, device, cfg: Dict
         all_targets.extend(y.detach().float().cpu().numpy().tolist())
 
         bar.set_postfix(loss=float(np.mean(losses)))
+
+    if step == -1:
+        raise RuntimeError("Training loader produced no batches. Check batch_size, drop_last, and data paths.")
 
     # leftover grads
     if (step + 1) % acc_steps != 0:
@@ -244,12 +247,15 @@ def validate(model, loader, loss_fn, device, cfg: Dict[str, Any]) -> Dict[str, A
     return {
         "loss": float(np.mean(losses)),
         "th": th,
+        "precision_floor_met": bool(sweep.get("precision_floor_met", True)),
         **metrics,
         "per_c": per_c,
     }
 
 
 def run_train(cfg: Dict[str, Any]) -> str:
+    from .model import build_model
+
     device = get_device(cfg)
     print(f"Device: {device}")
 
@@ -333,6 +339,14 @@ def run_train(cfg: Dict[str, Any]) -> str:
         )
         print(line)
         log_line(log_path, line)
+
+        if not va.get("precision_floor_met", True):
+            warn = (
+                "  [!] no threshold met precision_floor; "
+                f"using best {cfg.get('threshold_objective', 'recall')} threshold anyway"
+            )
+            print(warn)
+            log_line(log_path, warn)
 
         if bool(cfg.get("print_per_c", True)):
             for c_id in sorted(va["per_c"].keys()):

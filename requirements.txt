@@ -5,4 +5,5 @@ PyYAML==6.0.2
 scikit_learn==1.5.2
 timm==0.4.12
 torch==2.5.1
+torchvision==0.20.1
 tqdm==4.67.1

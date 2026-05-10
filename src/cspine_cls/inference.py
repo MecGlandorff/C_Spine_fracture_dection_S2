@@ -8,17 +8,6 @@
 #   - per vertebra: probability + prediction
 #   - patient-level: max(prob) + prediction
 
-"""
-Note (prototype):
-This module currently still expects the UNPACKED per-timestep .npy files:
-  {uid}_{cid}_{t}.npy with shape (H, W, 6)
-
-Training uses PACKED per-vertebra .npy files:
-  {uid}_{cid}.npy with shape (T, H, W, 6)
-
-Action: update load_vertebra_sequence() to read the packed format for consistency.
-"""
-
 from __future__ import annotations
 
 import os
@@ -28,39 +17,53 @@ import numpy as np
 import torch
 
 from .common import get_device, load_checkpoint
-from .model import build_model
-from .data import normalize_intensity_and_mask
+from .data import build_transforms, normalize_intensity_and_mask
 
 
-def _assert_npy_ok(arr: np.ndarray, fp: str, expect_ch: int = 6) -> None:
-    """Validate a single unpacked timestep array"""
+def _assert_packed_ok(arr: np.ndarray, fp: str, expect_t: int, expect_ch: int = 6) -> None:
+    """Validate one packed vertebra sequence."""
     if not isinstance(arr, np.ndarray):
         raise TypeError(f"Loaded object is not np.ndarray: {fp}")
-    if arr.ndim != 3:
-        raise ValueError(f"Expected (H,W,C), got {arr.shape} in {fp}")
+    if arr.ndim != 4:
+        raise ValueError(f"Expected packed shape (T,H,W,C), got {arr.shape} in {fp}")
+    if arr.shape[0] != expect_t:
+        raise ValueError(f"Expected T={expect_t}, got T={arr.shape[0]} in {fp}")
     if arr.shape[-1] != expect_ch:
         raise ValueError(f"Expected {expect_ch} channels, got {arr.shape[-1]} in {fp}")
 
 
 def load_vertebra_sequence(uid: str, cid: int, cfg: Dict[str, Any]) -> np.ndarray:
     """
-    Loads UNPACKED per-timestep npy files for one vertebra:
-      {uid}_{cid}_{t}.npy  -> (H, W, 6)
+    Loads one packed per-vertebra npy file:
+      {uid}_{cid}.npy -> (T, H, W, 6)
     Returns:
       seq: (T, 6, H, W) float32
     """
     data_dir = str(cfg["data_dir"])
     T = int(cfg.get("n_slice_per_c", 15))
+    fp = os.path.join(data_dir, f"{uid}_{cid}.npy")
+    if not os.path.exists(fp):
+        raise FileNotFoundError(f"Missing packed npy: {fp}")
 
+    seq = np.load(fp, allow_pickle=False)
+    _assert_packed_ok(seq, fp, expect_t=T, expect_ch=6)
+
+    geo_tf, _ = build_transforms(cfg, is_train=False)
     frames = []
     for t in range(T):
-        fp = os.path.join(data_dir, f"{uid}_{cid}_{t}.npy")
-        if not os.path.exists(fp):
-            raise FileNotFoundError(f"Missing npy: {fp}")
+        arr = seq[t]
+        intensity = arr[..., :5]
+        mask = arr[..., 5]
 
-        arr = np.load(fp, allow_pickle=False)
-        _assert_npy_ok(arr, fp, expect_ch=6)
+        if geo_tf is not None:
+            res = geo_tf(image=intensity, mask=mask)
+            intensity = res["image"]
+            mask = res["mask"]
 
+        if mask.ndim == 2:
+            mask = mask[..., None]
+
+        arr = np.concatenate([intensity, mask], axis=-1)
         arr = normalize_intensity_and_mask(arr, cfg)  # (H,W,6) float
         arr = arr.transpose(2, 0, 1)                  # (6,H,W)
         frames.append(arr)
@@ -70,6 +73,8 @@ def load_vertebra_sequence(uid: str, cid: int, cfg: Dict[str, Any]) -> np.ndarra
 
 @torch.no_grad()
 def score_patient(uid: str, checkpoint_path: str, cfg: Dict[str, Any]) -> Dict[str, Any]:
+    from .model import build_model
+
     device = get_device(cfg)
     ckpt = load_checkpoint(checkpoint_path, device)
 

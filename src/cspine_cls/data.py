@@ -22,8 +22,6 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
 
-import albumentations as A
-
 
 # -------------------------
 # Tiny utils
@@ -68,10 +66,8 @@ def normalize_intensity_and_mask(arr_hw6: np.ndarray, cfg: Dict[str, Any]) -> np
     std = float(cfg.get("intensity_std", 0.25))
     eps = 1e-6
 
-    x = arr_hw6.astype(np.float32, copy=False)
-
-    intens = _as_float01(x[..., :5])  # (H,W,5)
-    mask = x[..., 5:6]                # (H,W,1)
+    intens = _as_float01(arr_hw6[..., :5])  # (H,W,5)
+    mask = arr_hw6[..., 5:6]                # (H,W,1)
 
     # mask might be uint8 {0,255} or float {0,1}
     if mask.dtype == np.uint8:
@@ -87,12 +83,20 @@ def normalize_intensity_and_mask(arr_hw6: np.ndarray, cfg: Dict[str, Any]) -> np
 # -------------------------
 # Transforms
 # -------------------------
-def build_transforms(cfg: Dict[str, Any], is_train: bool) -> Tuple[Optional[A.Compose], Optional[A.Compose]]:
+def build_transforms(cfg: Dict[str, Any], is_train: bool) -> Tuple[Optional[Any], Optional[Any]]:
     """
     Returns:
       geo_tf: geometry transforms for intensity+mask together
       photo_tf: intensity-only transforms
     """
+    try:
+        import albumentations as A
+    except ModuleNotFoundError as exc:
+        raise ModuleNotFoundError(
+            "albumentations is required for data transforms. "
+            "Install project dependencies with: pip install -r requirements.txt"
+        ) from exc
+
     image_size = int(cfg.get("image_size", 224))
 
     if is_train:

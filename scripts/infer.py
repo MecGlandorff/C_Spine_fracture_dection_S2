@@ -49,7 +49,9 @@ def main():
     print(json.dumps(out, indent=2))
 
     if args.out is not None:
-        os.makedirs(os.path.dirname(args.out), exist_ok=True)
+        out_dir = os.path.dirname(args.out)
+        if out_dir:
+            os.makedirs(out_dir, exist_ok=True)
         with open(args.out, "w") as f:
             json.dump(out, f, indent=2)
         print(f"\nSaved: {args.out}")
