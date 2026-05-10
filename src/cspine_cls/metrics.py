@@ -40,15 +40,19 @@ def compute_binary_metrics(y_true: np.ndarray, y_prob: np.ndarray, th: float) ->
     }
 
 
-def threshold_sweep(y_true: np.ndarray, y_prob: np.ndarray, cfg: Dict[str, Any]) -> Dict[str, float]:
+def threshold_sweep(y_true: np.ndarray, y_prob: np.ndarray, cfg: Dict[str, Any]) -> Dict[str, Any]:
     ths = cfg.get("thresholds", None)
     if ths is None:
         ths = np.linspace(0.05, 0.95, 19)
 
     objective = str(cfg.get("threshold_objective", "recall")).lower()  # recall or f1?
+    if objective not in {"recall", "f1"}:
+        raise ValueError(f"Unsupported threshold_objective: {objective}")
+
     precision_floor = float(cfg.get("precision_floor", 0.0))
 
-    best = {"th": 0.5, "recall": -1.0, "f1": -1.0, "precision": -1.0, "acc": -1.0}
+    best = None
+    best_any = None
 
     for th in ths:
         pred = (y_prob >= th).astype(int)
@@ -56,20 +60,31 @@ def threshold_sweep(y_true: np.ndarray, y_prob: np.ndarray, cfg: Dict[str, Any])
         prec = precision_score(y_true, pred, zero_division=0)
         f1 = f1_score(y_true, pred, zero_division=0)
         acc = accuracy_score(y_true, pred)
+        candidate = {
+            "th": float(th),
+            "recall": float(rec),
+            "f1": float(f1),
+            "precision": float(prec),
+            "acc": float(acc),
+        }
+
+        score = candidate[objective]
+        if best_any is None or score > best_any[objective]:
+            best_any = candidate
 
         if prec < precision_floor:
             continue
 
-        score = f1 if objective == "f1" else rec
-        best_score = best["f1"] if objective == "f1" else best["recall"]
+        if best is None or score > best[objective]:
+            best = candidate
 
-        if score > best_score:
-            best = {
-                "th": float(th),
-                "recall": float(rec),
-                "f1": float(f1),
-                "precision": float(prec),
-                "acc": float(acc),
-            }
+    if best is None:
+        if best_any is None:
+            raise ValueError("No thresholds were provided for threshold_sweep.")
+        best = dict(best_any)
+        best["precision_floor_met"] = False
+        return best
 
+    best = dict(best)
+    best["precision_floor_met"] = True
     return best

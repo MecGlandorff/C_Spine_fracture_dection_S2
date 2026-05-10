@@ -1,6 +1,6 @@
 # Inference config (stage 2)
 
-data_dir: data/masks/
+data_dir: data/packed
 checkpoint_path: outputs/run_effnetv2_seq_v1/best_model.pth
 
 image_size: 224

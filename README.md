@@ -161,9 +161,26 @@ Where:
 
 ## Training
 
+Install dependencies first:
+
+```bash
+pip install -r requirements.txt
+```
+
+If you do not already have packed vertebra files, create them from unpacked timestep files:
+
+```bash
+python scripts/pack_sequences.py \
+  --src-dir data/cropped2d \
+  --dst-dir data/packed \
+  --n-slices 15
+```
+
 Training is launched via the script entrypoint:
 
-So to run, type in terminal: "python scripts/train.py --config configs/train.yaml"
+```bash
+python scripts/train.py --config configs/train.yaml
+```
 
 ### Key Characteristics of project
 
@@ -190,7 +207,15 @@ Each run directory contains:
 
 Inference for a single patient:
 
+```bash
 python scripts/infer.py --config configs/infer.yaml --uid <StudyInstanceUID>
+```
+
+Inference expects the same packed input format as training:
+
+```text
+data/packed/{StudyInstanceUID}_{c}.npy
+```
 
 ### Output
 
@@ -262,4 +287,3 @@ Tested with:
 * scikit-learn
 
 ---
-
